@@ -5,10 +5,19 @@ const express = require('express');              // Express.js web framework
 const bodyParser = require('body-parser');       // Middleware for parsing JSON requests
 const path = require('path');                    // Node.js path module for working with file and directory paths
 const bcrypt = require("bcrypt");
+const session = require('express-session');
+const uuid = require('uuid'); //to generate a unique session id
 const saltRounds = 5;
 
 // Creating an instance of the Express application
 const app = express();
+app.use(session({
+    cookie: { maxAge: 120000 }, // Session expires after 2 minutes of inactivity
+    secret: 'itsmysecret',
+    resave: false,
+    saveUninitialized: true,
+    genid: () => uuid.v4()
+}));
 
 // Setting the port number for the server
 const port = 3000;
@@ -40,7 +49,14 @@ app.post('/api/login', async (req, res) => {
     if (documents.length > 0) {
         let result = await bcrypt.compare(password, documents[0]['password']);
         if(result) {
-            res.send("User Logged In");
+            req.session.username = user_name;   // save user
+            console.log("Session ID:", req.sessionID);
+            res.cookie('username', user_name, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'strict'
+            });
+            res.sendFile(path.join(__dirname, 'frontend', 'home.html'));
         } else {
             res.send("Password Incorrect! Try again");
         }
@@ -74,7 +90,27 @@ app.post('/api/add_customer', async (req, res) => {
 
 // GET endpoint for the root URL, serving the home page
 app.get('/', async (req, res) => {
+    if (!req.session.username) {
+        console.log("Not authorized");
+    } else {
+        console.log(`Welcome, ${req.session.username}`);
+    }
     res.sendFile(path.join(__dirname, 'frontend', 'home.html'));
+});
+
+// GET endpoint for user logout
+app.get('/api/logout', async (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Logout failed");
+        } else {
+            //res.cookie('username', '', { expires: new Date(0) });
+            res.clearCookie('connect.sid');
+            res.clearCookie('username');
+            res.redirect('/');
+        }
+      });
 });
 
 // Starting the server and listening on the specified port
