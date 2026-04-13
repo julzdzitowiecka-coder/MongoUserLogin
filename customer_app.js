@@ -4,6 +4,8 @@ const Customers = require('./customer');         // Imported MongoDB model for '
 const express = require('express');              // Express.js web framework
 const bodyParser = require('body-parser');       // Middleware for parsing JSON requests
 const path = require('path');                    // Node.js path module for working with file and directory paths
+const bcrypt = require("bcrypt");
+const saltRounds = 5;
 
 // Creating an instance of the Express application
 const app = express();
@@ -32,11 +34,16 @@ app.post('/api/login', async (req, res) => {
     let password = data['password'];
 
     // Querying the MongoDB 'customers' collection for matching user_name and password
-    const documents = await Customers.find({ user_name: user_name, password: password });
+    const documents = await Customers.find({ user_name: user_name });
 
     // If a matching user is found, set the session username and serve the home page
     if (documents.length > 0) {
-        res.send("User Logged In");
+        let result = await bcrypt.compare(password, documents[0]['password']);
+        if(result) {
+            res.send("User Logged In");
+        } else {
+            res.send("Password Incorrect! Try again");
+        }
     } else {
         res.send("User Information incorrect");
     }
@@ -45,24 +52,24 @@ app.post('/api/login', async (req, res) => {
 // POST endpoint for adding a new customer
 app.post('/api/add_customer', async (req, res) => {
     const data = req.body;
-    console.log(data)
+    console.log(data);
     const documents = await Customers.find({ user_name: data['user_name']});
     if (documents.length > 0) {
         res.send("User already exists");
     }
-    
+    let hashedpwd = bcrypt.hashSync(data['password'], saltRounds);
     // Creating a new instance of the Customers model with data from the request
     const customer = new Customers({
         "user_name": data['user_name'],
         "age": data['age'],
-        "password": data['password'],
+        "password": hashedpwd,
         "email": data['email']
     });
-
+    console.log(customer);
     // Saving the new customer to the MongoDB 'customers' collection
     await customer.save();
 
-    res.send("Customer added successfully")
+    res.send("Customer added successfully");
 });
 
 // GET endpoint for the root URL, serving the home page
