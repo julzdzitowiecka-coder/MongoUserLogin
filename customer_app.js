@@ -43,26 +43,29 @@ app.post('/api/login', async (req, res) => {
     let user_name = data['user_name'];
     let password = data['password'];
 
-    // Querying the MongoDB 'customers' collection for matching user_name and password
-    const documents = await Customers.find({ user_name: user_name });
-
-    // If a matching user is found, set the session username and serve the home page
-    if (documents.length > 0) {
-        let result = await bcrypt.compare(password, documents[0]['password']);
-        if(result) {
-            req.session.username = user_name;   // save user
-            console.log("Session ID:", req.sessionID);
-            res.cookie('username', user_name, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'strict'
-            });
-            res.sendFile(path.join(__dirname, 'frontend', 'home.html'));
+    try {
+        // Querying the MongoDB 'customers' collection for matching user_name and password
+        const documents = await Customers.find({ user_name: user_name });
+        // If a matching user is found, set the session username and serve the home page
+        if (documents.length > 0) {
+            let result = await bcrypt.compare(password, documents[0]['password']);
+            if(result) {
+                req.session.username = user_name;   // save user
+                console.log("Session ID:", req.sessionID);
+                res.cookie('username', user_name, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'strict'
+                });
+                res.sendFile(path.join(__dirname, 'frontend', 'home.html'));
+            } else {
+                throw new AuthenticationFailed("Passwords don't match");
+            }
         } else {
-            res.send("Password Incorrect! Try again");
+            throw new InvalidUserError("No such user in database");
         }
-    } else {
-        res.send("User Information incorrect");
+    } catch (error) {
+        next(error);
     }
 });
 
