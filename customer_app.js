@@ -37,7 +37,7 @@ app.use('/static', express.static(path.join(".", 'frontend')));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // POST endpoint for user login
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', async (req, res, next) => {
     const data = req.body;
     console.log(data);
     let user_name = data['user_name'];
@@ -70,7 +70,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // POST endpoint for adding a new customer
-app.post('/api/add_customer', async (req, res) => {
+app.post('/api/add_customer', async (req, res, next) => {
     const data = req.body;
     console.log(data);
     const documents = await Customers.find({ user_name: data['user_name']});
@@ -107,7 +107,7 @@ app.get('/', async (req, res) => {
 });
 
 // GET endpoint for user logout
-app.get('/api/logout', async (req, res) => {
+app.get('/api/logout', async (req, res, next) => {
     req.session.destroy((err) => {
         if (err) {
             const logerr = new Error(err);
