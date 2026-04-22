@@ -115,6 +115,14 @@ app.get('/api/logout', async (req, res) => {
       });
 });
 
+// Catch‑all errors
+app.all("*",(req,res,next)=>{
+    const err = new Error(`Cannot find the URL ${req.originalUrl} in this application. Please check.`);
+    err.status = "Endpoint Failure";
+    err.statusCode = 404;
+    next(err);
+});
+
 // Error Handling middleware
 app.use((err, req, res, next) => {
     // Set default values for status code and status if not provided in the error object
