@@ -8,6 +8,7 @@ const bcrypt = require("bcrypt");
 const session = require('express-session');
 const uuid = require('uuid'); //to generate a unique session id
 const saltRounds = 5;
+const { ValidationError, InvalidUserError, AuthenticationFailed } = require('./CustomError');
 
 // Creating an instance of the Express application
 const app = express();
@@ -75,17 +76,21 @@ app.post('/api/add_customer', async (req, res) => {
     }
     let hashedpwd = bcrypt.hashSync(data['password'], saltRounds);
     // Creating a new instance of the Customers model with data from the request
-    const customer = new Customers({
-        "user_name": data['user_name'],
-        "age": data['age'],
-        "password": hashedpwd,
-        "email": data['email']
-    });
-    console.log(customer);
-    // Saving the new customer to the MongoDB 'customers' collection
-    await customer.save();
-
-    res.send("Customer added successfully");
+    try {
+        if (age < 21) {
+            throw new ValidationError("Customer Under required age limit");
+        }
+        const customer = new Customers({
+            "user_name": data['user_name'],
+            "age": age,
+            "password": hashedpwd,
+            "email": data['email']
+        });
+        await customer.save();
+        res.send("Customer added successfully");
+    } catch (error) {
+        next(error);
+    }
 });
 
 // GET endpoint for the root URL, serving the home page
