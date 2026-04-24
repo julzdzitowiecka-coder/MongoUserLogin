@@ -24,7 +24,7 @@ app.use(session({
 const port = 3000;
 
 // MongoDB connection URI and database name
-const uri =  "mongodb://root:Xm4exA3bUMJCcZct0oa7UPBC@172.21.201.102:27017";
+const uri =  "mongodb://mongodb:27017/customerDB";
 mongoose.connect(uri, {'dbName': 'customerDB'});
 
 // Middleware to parse JSON requests
