@@ -1,0 +1,20 @@
+services:
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+ 
+  app:
+    image: customerapp
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+ 
+networks:
+  app-network:
+    driver: bridge
