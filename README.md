@@ -29,7 +29,7 @@ Content-Type: application/json
 ```http
 POST /login
 Content-Type: application/json
-{ "username": "ivan", "password": "secret" }
+{ "username": "name", "password": "secret" }
 ```
 Response:
 ```json
